@@ -3,11 +3,21 @@ import pandas as pd
 from capability import suggest_drone_allocation
 
 # Page configuration
-st.set_page_config(page_title="Mission Planner", layout="wide")
+st.set_page_config(page_title="Mission Planner - Drone Capability Calculator", layout="wide")
 
 # Initialize session state for platoon
 if "platoon" not in st.session_state:
     st.session_state.platoon = []
+
+# Breadcrumb navigation
+breadcrumb_col1, breadcrumb_col2 = st.columns([0.1, 0.9])
+with breadcrumb_col1:
+    if st.button("🏠", key="breadcrumb_home", help="Go to Home"):
+        st.switch_page("pages/1_Home.py")
+with breadcrumb_col2:
+    st.markdown("🏠 **Home** > 🎯 **Mission Planner**")
+
+st.divider()
 
 st.title("🎯 Mission Planner")
 st.markdown("---")
