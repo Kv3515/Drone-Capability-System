@@ -33,7 +33,28 @@ with col1:
     # Drone Name dropdown
     drone_name = st.selectbox(
         "Drone Name",
-        ["Switch UAV", "Tunga", "DJI Air 3S", "DJI Mavic 2 Enterprise", "Black Hornet"],
+        [
+            "DJI Air 2S Quadcopter",
+            "SVL Copter Q5 HA",
+            "DJI Air 3S",
+            "DJI Mavic 2 Enterprise Advance",
+            "DJI 350 RTK",
+            "DJI Avata 2",
+            "DJI Neo",
+            "DJI Phantom 4",
+            "Nano Drone (Black Hornet)",
+            "DJI Mavic Mini",
+            "Quadcopter Day Medium Range",
+            "Quadcopter Day & Night Medium Range",
+            "Mini UAV NAFCL-2",
+            "Multicopter Medium Altitude (Tunga)",
+            "Drone Day Camera 1080P (Nano)",
+            "UAV Night Hawk",
+            "Mini UAV Switch",
+            "Micro Drone IF UAV 60 Min",
+            "Mini SVL Copter",
+            "RPAV"
+        ],
         key="drone_name_select"
     )
     
