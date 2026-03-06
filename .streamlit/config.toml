@@ -2,9 +2,15 @@
 headless = true
 port = 10000
 enableXsrfProtection = false
+baseUrlPath = ""
 
 [browser]
-serverAddress = "localhost"
+serverAddress = "0.0.0.0"
+gatherUsageStats = false
 
 [client]
 showErrorDetails = true
+toolbarMode = "minimal"
+
+[logger]
+level = "error"
