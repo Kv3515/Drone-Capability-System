@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from capability import calculate_drone_capability, calculate_platoon_capability
+from capability import calculate_drone_capability, calculate_platoon_capability, calculate_platoon_payload_capability
 
 # Page configuration
 st.set_page_config(page_title="Platoon Capability - Drone Capability Calculator", layout="wide")
@@ -118,6 +118,43 @@ with col2:
 
 st.divider()
 
+# Payload Configuration Section
+st.subheader("Payload Capability")
+
+payload_col1, payload_col2 = st.columns(2)
+
+with payload_col1:
+    st.write("**Payload Configuration**")
+    
+    # Payload Capable toggle
+    payload_capable = st.radio(
+        "Payload Capable",
+        ["Yes", "No"],
+        horizontal=True,
+        key="payload_capable_radio"
+    )
+    payload_capable_bool = payload_capable == "Yes"
+
+with payload_col2:
+    st.write("")
+    st.write("")
+    
+    # Payload Capacity (only if payload capable)
+    if payload_capable_bool:
+        payload_capacity_kg = st.number_input(
+            "Payload Capacity (kg)",
+            min_value=0.0,
+            max_value=100.0,
+            value=5.0,
+            step=0.5,
+            key="payload_capacity_input"
+        )
+    else:
+        payload_capacity_kg = 0.0
+        st.info("ℹ️ Payload capacity is disabled for this drone.")
+
+st.divider()
+
 # Add Drone to Platoon button
 if st.button("Add Drone to Platoon", use_container_width=True, type="primary", key="add_drone_button"):
     # Create drone configuration dictionary
@@ -130,7 +167,9 @@ if st.button("Add Drone to Platoon", use_container_width=True, type="primary", k
         "total_drones": total_drones,
         "mission_capable": mission_capable,
         "battery_sets": battery_sets,
-        "operators": operators
+        "operators": operators,
+        "payload_capable": payload_capable_bool,
+        "payload_capacity_kg": payload_capacity_kg
     }
     
     # Add drone to platoon
@@ -174,11 +213,11 @@ if st.session_state.platoon:
     df_editable = pd.DataFrame(st.session_state.platoon)
     
     # Select columns for editing
-    edit_columns = ["drone_name", "drone_class", "mission_capable", "battery_sets", "operators", "battery_health", "reliability"]
+    edit_columns = ["drone_name", "drone_class", "mission_capable", "battery_sets", "operators", "battery_health", "reliability", "payload_capable", "payload_capacity_kg"]
     df_edit = df_editable[edit_columns].copy()
     
     # Rename columns for better display
-    df_edit.columns = ["Drone Name", "Drone Class", "Mission Capable", "Battery Sets", "Operators", "Battery Health", "Reliability"]
+    df_edit.columns = ["Drone Name", "Drone Class", "Mission Capable", "Battery Sets", "Operators", "Battery Health", "Reliability", "Payload Capable", "Payload Capacity (kg)"]
     
     # Define column configuration for data editor
     column_config = {
@@ -189,6 +228,8 @@ if st.session_state.platoon:
         "Operators": st.column_config.NumberColumn(min_value=1, max_value=10),
         "Battery Health": st.column_config.NumberColumn(min_value=0.5, max_value=1.0, step=0.05),
         "Reliability": st.column_config.NumberColumn(min_value=0.0, max_value=1.0, step=0.1),
+        "Payload Capable": st.column_config.CheckboxColumn(),
+        "Payload Capacity (kg)": st.column_config.NumberColumn(min_value=0.0, max_value=100.0, step=0.5),
     }
     
     # Display editable data
@@ -218,7 +259,9 @@ if st.session_state.platoon:
                 "operators": int(row["Operators"]),
                 "battery_health": row["Battery Health"],
                 "reliability": row["Reliability"],
-                "total_drones": st.session_state.platoon[idx]["total_drones"]
+                "total_drones": st.session_state.platoon[idx]["total_drones"],
+                "payload_capable": row["Payload Capable"],
+                "payload_capacity_kg": row["Payload Capacity (kg)"]
             })
         
         # Update session state with all rows (deleted rows are not in edited_df)
@@ -274,3 +317,43 @@ if st.session_state.platoon:
         )
 else:
     st.info("Add drones to the platoon to see capability totals.")
+
+# Payload Capability Dashboard Section
+st.divider()
+st.subheader("📦 Payload Deployment Capability")
+
+if st.session_state.platoon:
+    # Calculate payload capability
+    payload_capability = calculate_platoon_payload_capability(st.session_state.platoon)
+    
+    # Display payload metrics
+    payload_metric_col1, payload_metric_col2 = st.columns(2)
+    
+    with payload_metric_col1:
+        st.metric(
+            "Max Payload Per Sortie",
+            f"{payload_capability['max_payload_per_sortie']:.1f} kg",
+            help="Maximum payload capacity among available payload-capable drones"
+        )
+    
+    with payload_metric_col2:
+        st.metric(
+            "Total Payload Sorties",
+            f"{payload_capability['total_payload_sorties']}",
+            help="Total payload sorties available across platoon (mission_capable × battery_sets)"
+        )
+    
+    # Display payload capability table
+    if payload_capability['payload_drones']:
+        st.markdown("**Payload Deployment by Drone Type**")
+        
+        payload_df = pd.DataFrame(payload_capability['payload_drones'])
+        payload_df_display = payload_df[['drone_name', 'drone_class', 'payload_capacity_kg', 'payload_sorties']].copy()
+        payload_df_display.columns = ['Drone Name', 'Drone Class', 'Payload per Sortie (kg)', 'Available Sorties']
+        
+        st.dataframe(payload_df_display, use_container_width=True, hide_index=True)
+    else:
+        st.info("No payload-capable drones in platoon inventory.")
+else:
+    st.info("Add drones to the platoon to see payload capability totals.")
+

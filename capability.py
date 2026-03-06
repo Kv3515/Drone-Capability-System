@@ -360,3 +360,82 @@ def calculate_drone_capability_dict(drone_dict, operators):
         "concurrent_flights": concurrent_flights,
         "continuous_isr": continuous_isr
     }
+
+
+def calculate_payload_sorties(drone):
+    """
+    Calculate payload deployment sorties for a single drone.
+    
+    Args:
+        drone (dict): Drone dictionary containing:
+            - payload_capable: Boolean indicating if drone can carry payload
+            - mission_capable: Number of mission-capable drones
+            - battery_sets: Number of battery sets available
+            - payload_capacity_kg: Payload capacity in kg (0 if not capable)
+    
+    Returns:
+        dict: Dictionary containing:
+            - payload_capable: Boolean
+            - payload_capacity_kg: Payload capacity (0 if not capable)
+            - payload_sorties: Total payload sorties available (mission_capable * battery_sets)
+    """
+    payload_capable = drone.get("payload_capable", False)
+    payload_capacity_kg = drone.get("payload_capacity_kg", 0.0)
+    
+    # If not payload capable, set capacity to 0
+    if not payload_capable:
+        payload_capacity_kg = 0.0
+    
+    # Calculate payload sorties: mission_capable * battery_sets
+    mission_capable = drone.get("mission_capable", 0)
+    battery_sets = drone.get("battery_sets", 1)
+    payload_sorties = mission_capable * battery_sets
+    
+    return {
+        "payload_capable": payload_capable,
+        "payload_capacity_kg": payload_capacity_kg,
+        "payload_sorties": payload_sorties
+    }
+
+
+def calculate_platoon_payload_capability(platoon):
+    """
+    Calculate aggregated payload capability for the entire platoon.
+    
+    Args:
+        platoon (list): List of drone dictionaries from st.session_state["platoon"]
+    
+    Returns:
+        dict: Dictionary containing:
+            - max_payload_per_sortie: Maximum payload capacity among available payload-capable drones (kg)
+            - total_payload_sorties: Total payload sorties available across platoon
+            - payload_drones: List of payload-capable drones with their sortie counts
+    """
+    max_payload = 0.0
+    total_sorties = 0
+    payload_drones = []
+    
+    for drone in platoon:
+        payload_info = calculate_payload_sorties(drone)
+        
+        if payload_info["payload_capable"] and payload_info["payload_capacity_kg"] > 0:
+            # Track maximum payload capacity (not summed)
+            max_payload = max(max_payload, payload_info["payload_capacity_kg"])
+            
+            # Sum total payload sorties
+            total_sorties += payload_info["payload_sorties"]
+            
+            # Record drone payload capability
+            payload_drones.append({
+                "drone_name": drone["drone_name"],
+                "drone_class": drone["drone_class"],
+                "payload_capacity_kg": payload_info["payload_capacity_kg"],
+                "payload_sorties": payload_info["payload_sorties"]
+            })
+    
+    return {
+        "max_payload_per_sortie": max_payload,
+        "total_payload_sorties": total_sorties,
+        "payload_drones": payload_drones
+    }
+
