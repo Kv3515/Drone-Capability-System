@@ -5,6 +5,29 @@ from capability import calculate_platoon_capability
 # Page configuration
 st.set_page_config(page_title="Drone Capability Calculator", layout="wide")
 
+# Progressive Web App (PWA) Configuration
+# Inject manifest link and meta tags for PWA support
+st.markdown(
+    """
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0E1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DroneOps">
+    <script>
+        // Register service worker for offline support and caching
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/service-worker.js').then(registration => {
+                console.log('Service Worker registered:', registration);
+            }).catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+        }
+    </script>
+    """,
+    unsafe_allow_html=True
+)
+
 # Initialize session state for platoon
 if "platoon" not in st.session_state:
     st.session_state.platoon = []
